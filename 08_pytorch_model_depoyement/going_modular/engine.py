@@ -1,12 +1,10 @@
 """
 Contains functions for training and testing a PyTorch model.
 """
-from typing import Dict, List, Tuple
-from torch.utils.tensorboard import SummaryWriter
-
 import torch
 
 from tqdm.auto import tqdm
+from typing import Dict, List, Tuple
 
 def train_step(model: torch.nn.Module, 
                dataloader: torch.utils.data.DataLoader, 
@@ -39,7 +37,7 @@ def train_step(model: torch.nn.Module,
     train_loss, train_acc = 0, 0
 
     # Loop through data loader data batches
-    for _, (X, y) in enumerate(dataloader):
+    for batch, (X, y) in enumerate(dataloader):
         # Send data to target device
         X, y = X.to(device), y.to(device)
 
@@ -124,8 +122,7 @@ def train(model: torch.nn.Module,
           optimizer: torch.optim.Optimizer,
           loss_fn: torch.nn.Module,
           epochs: int,
-          device: torch.device,
-          writer: SummaryWriter) -> Dict[str, List[float]]:
+          device: torch.device) -> Dict[str, List]:
     """Trains and tests a PyTorch model.
 
     Passes a target PyTorch models through train_step() and test_step()
@@ -163,6 +160,9 @@ def train(model: torch.nn.Module,
                "test_loss": [],
                "test_acc": []
     }
+    
+    # Make sure model on target device
+    model.to(device)
 
     # Loop through training and testing steps for a number of epochs
     for epoch in tqdm(range(epochs)):
@@ -190,27 +190,6 @@ def train(model: torch.nn.Module,
         results["train_acc"].append(train_acc)
         results["test_loss"].append(test_loss)
         results["test_acc"].append(test_acc)
-
-        # Add results to TensorBoard
-        if writer:
-            writer.add_scalars(main_tag="Loss",
-                            tag_scalar_dict={"train_loss": train_loss, 
-                                                "test_loss": test_loss},
-                            global_step=epoch)
-            writer.add_scalars(main_tag="Accuracy",
-                            tag_scalar_dict={"train_acc": train_acc, 
-                                                "test_acc": test_acc},
-                            global_step=epoch)
-
-            writer.add_graph(model=model,
-                            input_to_model=torch.randn(32, 3, 224, 224).to(device))
-            
-
-            # Close the writer
-            writer.close()
-        
-        else:
-            print("No SummaryWriter provided, skipping writing to TensorBoard.")
 
     # Return the filled results at the end of the epochs
     return results
