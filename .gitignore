@@ -151,3 +151,14 @@ dmypy.json
 event*
 experiments/
 data/
+
+
+# Gradio files
+gradio/
+.gradio/
+
+# Ultralitic files
+ultralitic/
+detect/
+
+classification*/
